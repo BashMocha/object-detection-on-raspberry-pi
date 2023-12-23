@@ -9,5 +9,5 @@ sudo apt-get install libatlas-base-dev gfortran # still testing
 # sudo apt-get install qt4-dev-tools libatlas-base-dev
 sudo apt-get install python3-pip
 
-sudo pip install numpy
-sudo pip install opencv-python
+sudo pip install numpy          # sudo python3 -m pip install numpy
+sudo pip install opencv-python  # sudo python3 -m pip install opencv-python
