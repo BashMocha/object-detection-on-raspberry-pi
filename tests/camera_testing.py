@@ -1,33 +1,43 @@
-import numpy as np
 import cv2
+import numpy as np
+from picamera.array import PiRGBArray
+from picamera import PiCamera
+
+FRAME_WIDTH = 1280
+FRAME_HEIGHT = 720
 
 
 def main():
-    cap = cv2.VideoCapture(0)
+    camera = PiCamera()
+    camera.resolution = (FRAME_WIDTH, FRAME_HEIGHT)
+    camera.framerate = 10
 
-    if not cap.isOpened():
-        print("Cannot open camera")
-        exit()
+    raw_capture = PiRGBArray(camera, size=(FRAME_WIDTH, FRAME_HEIGHT))
+    raw_capture.truncate(0)
 
-    while True:
-        # capture frame by frame
-        ret, frame = cap.read()
+    for frame1 in camera.capture_continuous(raw_capture, format='bgr', use_video_port=True):
 
-        if not ret:
-            print("Can't receive frame (stream end?). Exiting.")
+        t1 = cv2.getTickCount()
+
+        # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
+        # i.e. a single-column array, where each item in the column has the pixel RGB value
+        frame = np.copy(frame1.array)
+        frame.setflags(write=1)
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frame_expanded = np.expand_dims(frame_rgb, axis=0)
+
+        # All the results have been drawn on the frame, so it's time to display it.
+        cv2.imshow('Object detector', frame)
+
+        # Press 'q' to quit
+        if cv2.waitKey(1) == ord('q'):
             break
 
-        # our operations on the frame come here (????)
-        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        raw_capture.truncate(0)
 
-        # display the resulting frame
-        cv2.imshow('frame', gray)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    
-    # when everyting done, relase the capture
-    cap.release()
+    camera.close()
     cv2.destroyAllWindows()
+
 
 if __name__ == '__main__':
     main()
