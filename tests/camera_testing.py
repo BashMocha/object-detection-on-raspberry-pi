@@ -1,26 +1,28 @@
-#!/usr/bin/python3
-
 import cv2
+import time
 from picamera2 import Picamera2
+
+from tflite_support.task import core
+from tflite_support.task import processor
+from tflite_support.task import vision
 
 
 def main():
-    # Grab images as numpy arrays and leave everything else to OpenCV.
-    cv2.startWindowThread()
+    pi_cam = Picamera2()
+    pi_cam.preview_configuration.main.size = (1280, 720)
+    pi_cam.preview_configuration.main.format = "RGB888"
+    pi_cam.preview_configuration.main.align()
+    pi_cam.configure('preview')
 
-    cam = Picamera2()
-    cam.configure(cam.create_preview_configuration(
-        main={"format": 'XRGB8888', "size": (640, 480)}))
-    cam.start()
-
+    pi_cam.start()
     while True:
-        im = cam.capture_array()
-        #grey = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
-        cv2.imshow("Camera", im)
+        frame = pi_cam.capture_array()
+        cv2.imshow('pi_cam', frame)
+
         if cv2.waitKey(1) == ord('q'):
             break
-    
-    cam.close()
+
+    cv2.destroyAllWindows()
 
 
 if __name__ == '__main__':
