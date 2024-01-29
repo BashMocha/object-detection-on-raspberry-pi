@@ -13,6 +13,12 @@ DISPLAY_WIDTH = 1280
 DISPLAY_HEIGHT = 720
 DEFAULT_MODEL = 'efficientdet_lite0.tflite'
 CORAL_MODEL = 'efficientdet_lite0_edgetpu.tflite'
+FPS_POS = (20, 60)
+FPS_FONT = cv2.FONT_HERSHEY_SIMPLEX
+FPS_HEIGHT = 1.5
+FPS_WEIGHT = 3
+FPS_COLOR = (255, 0, 0)
+FPS_AVG_FRAME_COUNT = 10
 
 
 def main():
@@ -33,7 +39,7 @@ def detect(csi_camera: bool, width: int, height: int, num_threads: int, enable_e
         enable_edgetpu: True/False whether the model is a EdgeTPU model.
     """
     counter, fps = 0, 0
-    start_time = time.time()
+    fps_start_time = time.time()
 
     picam2 = Picamera2()
     picam2.preview_configuration.main.size = (width, height)
@@ -59,20 +65,39 @@ def detect(csi_camera: bool, width: int, height: int, num_threads: int, enable_e
     while True:
         if csi_camera:
             image = picam2.capture_array()
-            image = cv2.flip(image, -1)
-        #else:
-            #ret, image = cam.read()
-        
+        # else:
+            # ret, image = cam.read()
+        counter += 1
+        image = cv2.flip(image, -1)
+
+        # Convert the image from BGR to RGB as required by the TFLite model
         image_RGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Create a TensorImage object from  the RGB image
         image_tensor = vision.TensorImage.create_from_array(image_RGB)
+
+        # Run object detection estimation using the model
         detections = detector.detect(image_tensor)
+
+        # Draw keypoints and edges on input image
         image = utils.visualize(image, detections)
 
+        # Calculate the FPS
+        if counter % FPS_AVG_FRAME_COUNT == 0:
+            fps_end_time = time.time()
+            fps = FPS_AVG_FRAME_COUNT / (fps_end_time - fps_start_time)
+            fps_start_time = time.time()
+
+        # Show the FPS
+        fps_text = 'FPS = {:.1f}'.format(fps)
+        cv2.putText(image, fps_text,
+                    FPS_POS, FPS_FONT, FPS_HEIGHT, FPS_COLOR, FPS_WEIGHT)
+
+        # Stop the program if the ESC or 'Q' key is pressed.
+        if cv2.waitKey(1) == ord('q') or cv2.waitKey(1) == 27:
+            break
         cv2.imshow('Camera', image)
 
-        if cv2.waitKey(1) == ord('q'):
-            break
-    
     cv2.destroyAllWindows()
 
 
