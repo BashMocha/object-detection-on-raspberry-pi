@@ -58,7 +58,7 @@ def detect(csi_camera: bool, width: int, height: int, num_threads: int, enable_e
 
     while True:
         if csi_camera:
-            image = picam2.capture.array()
+            image = picam2.capture_array()
             image = cv2.flip(image, -1)
         #else:
             #ret, image = cam.read()
@@ -66,7 +66,7 @@ def detect(csi_camera: bool, width: int, height: int, num_threads: int, enable_e
         image_RGB = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         image_tensor = vision.TensorImage.create_from_array(image_RGB)
         detections = detector.detect(image_tensor)
-        image = utils.visualize(detections)
+        image = utils.visualize(image, detections)
 
         cv2.imshow('Camera', image)
 
