@@ -41,13 +41,20 @@ def detect(csi_camera: bool, width: int, height: int, num_threads: int, enable_e
     counter, fps = 0, 0
     fps_start_time = time.time()
 
-    picam2 = Picamera2()
-    picam2.preview_configuration.main.size = (width, height)
-    picam2.preview_configuration.main.format = 'RGB888'
-    picam2.preview_configuration.main.align()
-    picam2.configure("preview")
-    picam2.start()
+    # Get image from the camera module
+    if csi_camera:
+        picam2 = Picamera2()
+        picam2.preview_configuration.main.size = (width, height)
+        picam2.preview_configuration.main.format = 'RGB888'
+        picam2.preview_configuration.main.align()
+        picam2.configure("preview")
+        picam2.start()
+    else:
+        cap = cv2.VideoCapture(0)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
+    # enable Coral TPU if it's used
     if enable_edgetpu:
         model = CORAL_MODEL
     else:
@@ -65,8 +72,13 @@ def detect(csi_camera: bool, width: int, height: int, num_threads: int, enable_e
     while True:
         if csi_camera:
             image = picam2.capture_array()
-        # else:
-            # ret, image = cam.read()
+        else:
+            success, image = cap.read()
+            if not success:
+                sys.exit(
+                    'ERROR: Unable to read from webcam. Please verify your webcam settings.'
+                )
+
         counter += 1
         image = cv2.flip(image, -1)
 
@@ -93,10 +105,13 @@ def detect(csi_camera: bool, width: int, height: int, num_threads: int, enable_e
         cv2.putText(image, fps_text,
                     FPS_POS, FPS_FONT, FPS_HEIGHT, FPS_COLOR, FPS_WEIGHT)
 
-        # Stop the program if the ESC or 'Q' key is pressed.
-        if cv2.waitKey(1) == ord('q') or cv2.waitKey(1) == 27:
+        # Stop the program if the 'Q' key is pressed.
+        if cv2.waitKey(1) == ord('q'):
             break
         cv2.imshow('Camera', image)
+
+    if not csi_camera:
+        cap.release()
 
     cv2.destroyAllWindows()
 
