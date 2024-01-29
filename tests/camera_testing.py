@@ -1,5 +1,4 @@
 import cv2
-import time
 from picamera2 import Picamera2
 
 from tflite_support.task import core

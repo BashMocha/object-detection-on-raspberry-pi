@@ -1,1 +1,3 @@
 todo.txt
+./src/efficientdet_lite0.tflite
+./src/efficientdet_lite0_edgetpu.tflite
