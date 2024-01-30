@@ -71,6 +71,8 @@ To run the project, change the directory to `./src` and type:
 ```shell
 (tflite)$ python3 detect.py
 ```
+<br>
+
 > [!NOTE]
 > If you are getting an error like:
 
